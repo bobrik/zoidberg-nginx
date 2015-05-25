@@ -31,8 +31,10 @@ RUN echo "APT::Install-Recommends false;" >> /etc/apt/apt.conf.d/recommends.conf
     apt-get remove -y build-essential curl libpcre3-dev zlib1g-dev git && \
     apt-get autoremove -y
 
-ENTRYPOINT ["nginx"]
+VOLUME ["/etc/nginx/include/http"]
+ENTRYPOINT ["/run.sh"]
 
+COPY ./run.sh /run.sh
+COPY ./include /etc/nginx/include
+COPY ./lua /etc/nginx/lua
 COPY ./nginx.conf /etc/nginx/nginx.conf
-COPY ./zoidberg-state-handler.lua /etc/nginx/lua/zoidberg-state-handler.lua
-COPY ./zoidberg-proxy-rewrite.lua /etc/nginx/lua/zoidberg-proxy-rewrite.lua
