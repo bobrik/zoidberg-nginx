@@ -61,28 +61,32 @@ elseif ngx.req.get_method() == "PUT" or ngx.req.get_method() == "POST" then
     local saved = {}
 
     for name, app in pairs(state.apps) do
-        local servers = {}
+        local directives = {}
 
-        for i, server in ipairs(app.servers) do
+        for _, server in ipairs(app.servers) do
             if state.state.versions[name] then
                 if state.state.versions[name][server.version].weight > 0 then
-                    table.insert(servers, "server " .. server.host .. ":" .. server.port .. " weight=" .. state.state.versions[name][server.version].weight .. ";")
+                    table.insert(directives, "server " .. server.host .. ":" .. server.port .. " weight=" .. state.state.versions[name][server.version].weight .. ";")
                 end
             end
         end
 
-        table.sort(servers)
+        local servers = table.getn(directives)
 
-        local upstreams = table.concat(servers, "")
+        table.sort(directives)
 
-        if table.getn(servers) > 0 then
-            if (not current) or (not current.saved) or (not current.saved[name]) or current.saved[name] ~= upstreams then
-                ngx.log(ngx.NOTICE, "updating " .. name .. ": " .. table.getn(servers) .. " upstreams")
-                local status, rv = require("ngx.dyups").update(name, upstreams)
+        table.insert(directives, "keepalive 32;")
+
+        local upstream = table.concat(directives, "")
+
+        if table.getn(directives) > 0 then
+            if (not current) or (not current.saved) or (not current.saved[name]) or current.saved[name] ~= upstream then
+                ngx.log(ngx.NOTICE, "updating " .. name .. ": " .. servers .. " upstreams")
+                local status, rv = require("ngx.dyups").update(name, upstream)
                 ngx.log(ngx.NOTICE, "updated " .. name .. ": " .. status .. ", " .. rv)
             end
 
-            saved[name] = upstreams
+            saved[name] = upstream
             enabled[name] = true
         end
     end

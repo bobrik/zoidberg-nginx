@@ -15,14 +15,26 @@ Another goal is to reuse rich ecosystem of nginx modules and lua scripting.
 
 ## Usage
 
-Don't go YOLO and run in in production yet, okay?
+Create simple config for your application `myapp.zoidberg`:
 
-Launch load balancer somewhere, exposing managing and service discovery ports:
+`/tmp/myapp.conf`:
 
 ```
-docker run -d \
-    -p <service discovery host>:<service discovery port>:80 \
-    -p <managment host>:<management port>:9000 \
+server {
+    listen lb1.prod:13003;
+
+    location / {
+        set $where myapp.zoidberg;
+        proxy_pass http://$where;
+    }
+}
+```
+
+Then run `zoidberg-nginx` with provided config:
+
+```
+docker run -d --net host -e ZOIDBERG_LISTEN=lb1.prod:13000 \
+    -v /tmp/myapp.conf:/etc/nginx/include/http/myapp.conf:ro \
     --name zoidberg-nginx bobrik/zoidberg-nginx
 ```
 
@@ -33,9 +45,9 @@ Add some servers to your load balancer:
 ```json
 {
     "apps": {
-        "myapp": {
-            "name": "myapp",
-            "port": 1313,
+        "myapp.zoidberg": {
+            "name": "myapp.zoidberg",
+            "port": 13003,
             "servers": [
                 {
                     "host": "example.com",
@@ -45,11 +57,13 @@ Add some servers to your load balancer:
             ]
         }
     },
-    "versions": {
-        "myapp": {
-            "/v1": {
-                "name": "/v1",
-                "weight": 1
+    "state": {
+        "versions": {
+            "myapp.zoidberg": {
+                "/v1": {
+                    "name": "/v1",
+                    "weight": 1
+                }
             }
         }
     }
@@ -57,7 +71,7 @@ Add some servers to your load balancer:
 ```
 
 ```
-curl -v -X POST http://<managment host>:<management port>/state -d @state.json
+curl -v -X POST http://lb1.prod:13000/state -d @state.json
 ```
 
 Feel free to change state to whatever you think is appropriate. In fact,
@@ -67,7 +81,7 @@ Zoidberg should update state in real world, not a silly human like you.
 To check if your balancer works:
 
 ```
-curl -H "Host: myapp" -v http://<service discovery host>:<service discovery port>/
+curl -v http://lb1.prod:13003/
 ```
 
 You should see the contents of `example.com` in your terminal.
