@@ -77,7 +77,7 @@ elseif ngx.req.get_method() == "PUT" or ngx.req.get_method() == "POST" then
 
         table.insert(directives, "keepalive 32;")
 
-        local upstream = table.concat(directives, "")
+        local upstream = table.concat(directives, "\n")
 
         if table.getn(directives) > 0 then
             if (not current) or (not current.saved) or (not current.saved[name]) or current.saved[name] ~= upstream then
@@ -92,6 +92,24 @@ elseif ngx.req.get_method() == "PUT" or ngx.req.get_method() == "POST" then
     end
 
     ngx.shared.zoidberg_state = { state = state, saved = saved, enabled = enabled }
+
+    local dumped, openError = io.open("/etc/nginx/include/dyups/upstreams.conf.temp", "w")
+    if not dumped then
+        ngx.log(ngx.ERR, "failed to open temp file for upstreams: " .. openError)
+    else
+        for name, directives in pairs(saved) do
+            dumped:write("upstream " .. name .. " {\n")
+            dumped:write("    " .. directives:gsub("\n", "\n    ") .. "\n")
+            dumped:write("}\n")
+        end
+
+        io.close(dumped)
+
+        local moved, moveError = os.rename("/etc/nginx/include/dyups/upstreams.conf.temp", "/etc/nginx/include/dyups/upstreams.conf")
+        if not moved then
+            ngx.log(ngx.ERR, "failed to move temp file for upstreams to the place: " .. moveError)
+        end
+    end
 
     return ngx.exit(204)
 else
