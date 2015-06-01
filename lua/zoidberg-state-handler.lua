@@ -44,21 +44,31 @@
 --        :.__              :           ________.......,'
 --            """"""""------'------""""""
 
+local cjson = require("cjson")
+
 if ngx.req.get_method() == "GET" then
     ngx.header.content_type = "application/json";
 
-    if not ngx.shared.zoidberg_state then
+    local state = ngx.shared.zoidberg:get("state")
+    if not state then
         return ngx.say("{}")
     end
 
-    return ngx.say(require("cjson").new().encode(ngx.shared.zoidberg_state.state))
+    return ngx.say(cjson.new().encode(cjson.decode(state).state))
 elseif ngx.req.get_method() == "PUT" or ngx.req.get_method() == "POST" then
     ngx.req.read_body()
 
-    local state = require("cjson").new().decode(ngx.req.get_body_data())
-    local current = ngx.shared.zoidberg_state
+    local state = cjson.new().decode(ngx.req.get_body_data())
+    local zoidberg = ngx.shared.zoidberg
+    local global_directives = zoidberg:get("global_directives")
     local enabled = {}
     local saved = {}
+
+    local current = {}
+    local current_serialized = zoidberg:get("state")
+    if current_serialized then
+        current = cjson.new().decode(current_serialized)
+    end
 
     for name, app in pairs(state.apps) do
         local directives = {}
@@ -66,7 +76,10 @@ elseif ngx.req.get_method() == "PUT" or ngx.req.get_method() == "POST" then
         for _, server in ipairs(app.servers) do
             if state.state.versions[name] then
                 if state.state.versions[name][server.version].weight > 0 then
-                    table.insert(directives, "server " .. server.host .. ":" .. server.port .. " weight=" .. state.state.versions[name][server.version].weight .. ";")
+                    local host = server.host
+                    local port = server.port
+                    local weight = state.state.versions[name][server.version].weight
+                    table.insert(directives, "server " .. host .. ":" .. port .. " weight=" .. weight .. ";")
                 end
             end
         end
@@ -75,7 +88,14 @@ elseif ngx.req.get_method() == "PUT" or ngx.req.get_method() == "POST" then
 
         table.sort(directives)
 
-        table.insert(directives, "keepalive 32;")
+        if global_directives then
+            table.insert(directives, global_directives)
+        end
+
+        local upstream_directives = zoidberg:get("upstream_directives:" .. name)
+        if upstream_directives then
+            table.insert(directives, upstream_directives)
+        end
 
         local upstream = table.concat(directives, "\n")
 
@@ -91,7 +111,7 @@ elseif ngx.req.get_method() == "PUT" or ngx.req.get_method() == "POST" then
         end
     end
 
-    ngx.shared.zoidberg_state = { state = state, saved = saved, enabled = enabled }
+    zoidberg:set("state", cjson.new().encode({ state = state, saved = saved, enabled = enabled }))
 
     local dumped, openError = io.open("/etc/nginx/include/dyups/upstreams.conf.temp", "w")
     if not dumped then

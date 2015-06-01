@@ -85,3 +85,27 @@ curl -v http://lb1.prod:13003/
 ```
 
 You should see the contents of `example.com` in your terminal.
+
+### Adding directives to upstreams
+
+You can add an additional config with `init_by_lua` directive to set up
+custom settings for zoidberg. Currently supported settings:
+
+#### Setting global directives for each upstream managed by zoidberg
+
+Add `keepalive 16;` to each `upstream` block:
+
+```lua
+ngx.shared.zoidberg:set("global_directives", "keepalive 16;")
+```
+
+#### Setting directives for specific upstreams managed by zoidberg
+
+Add `keepalive 8;` to upstream of `myapp`:
+
+```lua
+ngx.shared.zoidberg:set("upstream_directives:myapp", "keepalive 8;")
+```
+
+Note that setting global and local directives like `keepalive` would
+trigger an error since you cannot have two `keepalive` directives.
