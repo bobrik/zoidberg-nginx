@@ -1,8 +1,8 @@
-# nginx managed by Zoidberg
+# Nginx managed by Zoidberg
 
-This is a POC of a service discovery mechanism made of nginx server
-managed by [zoidberg](https://github.com/bobrik/zoidberg). The main
-use-case is to provide service discovery for mesos.
+This is nginx-based load balancer implementation managed by
+[zoidberg](https://github.com/bobrik/zoidberg). The main use-case of this
+project is to provide service discovery for Mesos.
 
 The main goal of this project is to provide service discovery capable
 of doing frequent state updates (at least 1 per second) without spawning
@@ -46,13 +46,11 @@ Add some servers to your load balancer:
 {
     "apps": {
         "myapp.zoidberg": {
-            "name": "myapp.zoidberg",
-            "port": 13003,
             "servers": [
                 {
                     "host": "example.com",
                     "port": 80,
-                    "version": "/v1"
+                    "version": "v1"
                 }
             ]
         }
@@ -60,8 +58,7 @@ Add some servers to your load balancer:
     "state": {
         "versions": {
             "myapp.zoidberg": {
-                "/v1": {
-                    "name": "/v1",
+                "v1": {
                     "weight": 1
                 }
             }
@@ -71,12 +68,15 @@ Add some servers to your load balancer:
 ```
 
 ```
-curl -v -X POST http://lb1.prod:13000/state -d @state.json
+curl -v -X POST http://lb1.prod:13000/state/mygroup -d @state.json
 ```
 
 Feel free to change state to whatever you think is appropriate. In fact,
 Zoidberg should update state in real world, not a silly human like you.
 
+Here `mygroup` is the name of your group. Groups are managed by different
+Zoidberg instances that can use different discovery mechanisms or even
+different Mesos clusters.
 
 To check if your balancer works:
 

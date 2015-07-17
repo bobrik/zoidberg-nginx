@@ -45,11 +45,13 @@
 --            """"""""------'------""""""
 
 local cjson = require("cjson")
+local group = ngx.var.zoidberg_group
+local state_key = "state:" .. group
 
 if ngx.req.get_method() == "GET" then
     ngx.header.content_type = "application/json";
 
-    local state = ngx.shared.zoidberg:get("state")
+    local state = ngx.shared.zoidberg:get(state_key)
     if not state then
         return ngx.say("{}")
     end
@@ -65,7 +67,7 @@ elseif ngx.req.get_method() == "PUT" or ngx.req.get_method() == "POST" then
     local saved = {}
 
     local current = {}
-    local current_serialized = zoidberg:get("state")
+    local current_serialized = zoidberg:get(state_key)
     if current_serialized then
         current = cjson.new().decode(current_serialized)
     end
@@ -111,9 +113,11 @@ elseif ngx.req.get_method() == "PUT" or ngx.req.get_method() == "POST" then
         end
     end
 
-    zoidberg:set("state", cjson.new().encode({ state = state, saved = saved, enabled = enabled }))
+    zoidberg:set(state_key, cjson.new().encode({ state = state, saved = saved, enabled = enabled }))
 
-    local dumped, openError = io.open("/etc/nginx/include/dyups/upstreams.conf.temp", "w")
+    local temp_upstreams_file = "/etc/nginx/include/dyups/" .. group .. ".conf.temp"
+    local final_upstreams_file = "/etc/nginx/include/dyups/" .. group .. ".conf"
+    local dumped, openError = io.open(temp_upstreams_file, "w")
     if not dumped then
         ngx.log(ngx.ERR, "failed to open temp file for upstreams: " .. openError)
     else
@@ -125,7 +129,7 @@ elseif ngx.req.get_method() == "PUT" or ngx.req.get_method() == "POST" then
 
         io.close(dumped)
 
-        local moved, moveError = os.rename("/etc/nginx/include/dyups/upstreams.conf.temp", "/etc/nginx/include/dyups/upstreams.conf")
+        local moved, moveError = os.rename(temp_upstreams_file, final_upstreams_file)
         if not moved then
             ngx.log(ngx.ERR, "failed to move temp file for upstreams to the place: " .. moveError)
         end
