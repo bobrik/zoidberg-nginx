@@ -39,4 +39,5 @@ COPY ./include /etc/nginx/include
 COPY ./lua /etc/nginx/lua
 COPY ./nginx.conf /etc/nginx/nginx.conf
 
-RUN chown -R nginx /etc/nginx/include/dyups
+RUN mkdir /etc/nginx/include/dyups && \
+    chown -R nginx /etc/nginx/include/dyups
