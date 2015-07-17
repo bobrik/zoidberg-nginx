@@ -8,11 +8,11 @@ RUN echo "APT::Install-Recommends false;" >> /etc/apt/apt.conf.d/recommends.conf
     apt-get install -y build-essential curl libpcre3-dev zlib1g-dev git && \
     apt-get install -y ca-certificates luajit-5.1-dev lua-cjson && \
     mkdir /workdir && \
-    curl -s http://nginx.org/download/nginx-1.9.0.tar.gz | tar zx -C /workdir && \
+    curl -s http://nginx.org/download/nginx-1.9.3.tar.gz | tar zx -C /workdir && \
     git clone https://github.com/yzprofile/ngx_http_dyups_module.git /workdir/ngx_http_dyups_module && \
     git clone https://github.com/chaoslawful/lua-nginx-module.git /workdir/lua-nginx-module && \
     useradd --no-create-home nginx && \
-    cd /workdir/nginx-1.9.0 && \
+    cd /workdir/nginx-1.9.3 && \
     ./configure \
         --prefix=/etc/nginx \
         --sbin-path=/usr/sbin/nginx \
