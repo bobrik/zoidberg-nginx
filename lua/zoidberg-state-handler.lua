@@ -77,11 +77,15 @@ elseif ngx.req.get_method() == "PUT" or ngx.req.get_method() == "POST" then
 
         for _, server in ipairs(app.servers) do
             if state.state.versions[name] then
-                if state.state.versions[name][server.version].weight > 0 then
-                    local host = server.host
-                    local port = server.port
-                    local weight = state.state.versions[name][server.version].weight
-                    table.insert(directives, "server " .. host .. ":" .. port .. " weight=" .. weight .. ";")
+                if state.state.versions[name][server.version] then
+                    if state.state.versions[name][server.version].weight > 0 then
+                        local host = server.host
+                        local port = server.port
+                        local weight = state.state.versions[name][server.version].weight
+                        table.insert(directives, "server " .. host .. ":" .. port .. " weight=" .. weight .. ";")
+                    end
+                elseif server.version == "1" then
+                    table.insert(directives, "server " .. server.host .. ":" .. server.port .. " weight=1;")
                 end
             end
         end
