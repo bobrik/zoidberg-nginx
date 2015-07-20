@@ -86,6 +86,11 @@ curl -v http://lb1.prod:13003/
 
 You should see the contents of `example.com` in your terminal.
 
+### Default version
+
+Version `1` is automatically enabled with `weight` set to `1`. This allows
+you to skip version setting in the deployment process.
+
 ### Adding directives to upstreams
 
 You can add an additional config with `init_by_lua` directive to set up
