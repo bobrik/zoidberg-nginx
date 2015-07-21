@@ -84,9 +84,9 @@ elseif ngx.req.get_method() == "PUT" or ngx.req.get_method() == "POST" then
                         local weight = state.state.versions[name][server.version].weight
                         table.insert(directives, "server " .. host .. ":" .. port .. " weight=" .. weight .. ";")
                     end
-                elseif server.version == "1" then
-                    table.insert(directives, "server " .. server.host .. ":" .. server.port .. " weight=1;")
                 end
+            elseif server.version == "1" then
+                table.insert(directives, "server " .. server.host .. ":" .. server.port .. " weight=1;")
             end
         end
 
