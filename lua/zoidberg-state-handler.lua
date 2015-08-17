@@ -91,20 +91,20 @@ elseif ngx.req.get_method() == "PUT" or ngx.req.get_method() == "POST" then
 
         local servers = table.getn(directives)
 
-        table.sort(directives)
+        if servers > 0 then
+            table.sort(directives)
 
-        if global_directives then
-            table.insert(directives, global_directives)
-        end
+            if global_directives then
+                table.insert(directives, global_directives)
+            end
 
-        local upstream_directives = zoidberg:get("upstream_directives:" .. name)
-        if upstream_directives then
-            table.insert(directives, upstream_directives)
-        end
+            local upstream_directives = zoidberg:get("upstream_directives:" .. name)
+            if upstream_directives then
+                table.insert(directives, upstream_directives)
+            end
 
-        local upstream = table.concat(directives, "\n")
+            local upstream = table.concat(directives, "\n")
 
-        if table.getn(directives) > 0 then
             if (not current) or (not current.saved) or (not current.saved[name]) or current.saved[name] ~= upstream then
                 ngx.log(ngx.NOTICE, "updating " .. name .. ": " .. servers .. " upstreams")
                 local status, rv = require("ngx.dyups").update(name, upstream)
