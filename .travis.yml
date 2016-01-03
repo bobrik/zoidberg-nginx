@@ -1,0 +1,11 @@
+language: generic
+
+sudo: required
+
+services:
+  - docker
+
+script:
+  - docker build -t zoidberg-nginx .
+  - docker run --rm zoidberg-nginx -V
+  - docker build -f Dockerfile.test .
