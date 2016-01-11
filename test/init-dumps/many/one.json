@@ -1,0 +1,15 @@
+{
+  "group": "mygroup",
+  "version": "garbage",
+  "name": "one",
+  "app": {
+    "servers": [
+      {
+        "host": "127.0.0.1",
+        "port": 12345,
+        "weight": 1,
+        "addr": "127.0.0.1"
+      }
+    ]
+  }
+}

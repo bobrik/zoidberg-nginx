@@ -1,0 +1,8 @@
+{
+  "group": "mygroup",
+  "version": "garbage",
+  "name": "three",
+  "app": {
+    "servers": []
+  }
+}
