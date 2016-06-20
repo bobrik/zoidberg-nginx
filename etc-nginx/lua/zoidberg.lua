@@ -334,7 +334,7 @@ function _M.handle(apps_dict, locks_dict, dump_path, nameservers)
 
     local input, err = json.decode(ngx.req.get_body_data())
     if err then
-      ngx.log("error decoding input json for group " .. group .. ": " .. err)
+      ngx.log(ngx.ERR, "error decoding input json for group " .. group .. ": " .. err)
       ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
