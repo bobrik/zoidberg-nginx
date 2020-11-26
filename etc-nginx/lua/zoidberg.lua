@@ -276,6 +276,7 @@ end
 
 function _M.updateState(self, group, input)
   local state = stateFromInput(input)
+  local err
 
   for name, app in pairs(state) do
     err = self:updateApp(group, name, app)
